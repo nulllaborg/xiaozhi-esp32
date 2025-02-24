@@ -102,6 +102,8 @@ choice BOARD_TYPE
         bool "无名科技星智0.96"
     config BOARD_TYPE_XINGZHI_Cube_TFT
         bool "无名科技星智1.54"
+    config BOART_TYPE_NULLLAB_ESP32
+        bool "Nulllab ESP32"
 endchoice
 
 choice DISPLAY_OLED_TYPE
