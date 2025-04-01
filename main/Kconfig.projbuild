@@ -158,6 +158,8 @@ choice BOARD_TYPE
         bool "SenseCAP Watcher"
     config BOARD_TYPE_NULLLAB_AI_VOX
         bool "Nulllab AI Vox"
+    config BOARD_TYPE_EMAKEFUN_ESP32_IOT_BOARD
+        bool "Emakefun ESP32 Iot Board"
 endchoice
 
 choice DISPLAY_OLED_TYPE
