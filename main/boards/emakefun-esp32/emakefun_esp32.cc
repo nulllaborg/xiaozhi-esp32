@@ -6,6 +6,8 @@
 
 #include "application.h"
 #include "audio_codecs/no_audio_codec.h"
+#include "audio_input_device.h"
+#include "audio_output_device.h"
 #include "button.h"
 #include "config.h"
 #include "display/oled_display.h"
@@ -14,12 +16,12 @@
 #include "system_reset.h"
 #include "wifi_board.h"
 
-#define TAG "EmakefunEsp32IotBoard"
+#define TAG "EmakefunEsp32"
 
 LV_FONT_DECLARE(font_puhui_14_1);
 LV_FONT_DECLARE(font_awesome_14_1);
 
-class EmakefunEsp32IotBoard : public WifiBoard {
+class EmakefunEsp32 : public WifiBoard {
  private:
   Button boot_button_;
 
@@ -98,23 +100,12 @@ class EmakefunEsp32IotBoard : public WifiBoard {
   }
 
   void InitializeButtons() {
-    // 配置 GPIO
-    gpio_config_t io_conf = {
-        .pin_bit_mask = 1ULL << BUILTIN_LED_GPIO,  // 设置需要配置的 GPIO 引脚
-        .mode = GPIO_MODE_OUTPUT,                  // 设置为输出模式
-        .pull_up_en = GPIO_PULLUP_DISABLE,         // 禁用上拉
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,     // 禁用下拉
-        .intr_type = GPIO_INTR_DISABLE             // 禁用中断
-    };
-    gpio_config(&io_conf);  // 应用配置
-
     boot_button_.OnClick([this]() {
       auto& app = Application::GetInstance();
       if (app.GetDeviceState() == kDeviceStateStarting &&
           !WifiStation::GetInstance().IsConnected()) {
         ResetWifiConfiguration();
       }
-      gpio_set_level(BUILTIN_LED_GPIO, 1);
       app.ToggleChatState();
     });
   }
@@ -127,7 +118,7 @@ class EmakefunEsp32IotBoard : public WifiBoard {
   }
 
  public:
-  EmakefunEsp32IotBoard() : boot_button_(BOOT_BUTTON_GPIO) {
+  EmakefunEsp32() : boot_button_(BOOT_BUTTON_GPIO) {
     InitializeDisplayI2c();
     InitializeSsd1306Display();
     InitializeButtons();
@@ -135,15 +126,24 @@ class EmakefunEsp32IotBoard : public WifiBoard {
   }
 
   virtual AudioCodec* GetAudioCodec() override {
-    static NoAudioCodecSimplex audio_codec(
+    class AudioDevice : public AudioInputDevice, public AudioOutputDevice {
+     public:
+      AudioDevice(int input_sample_rate, int output_sample_rate,
+                  gpio_num_t spk_bclk, gpio_num_t spk_ws, gpio_num_t spk_dout,
+                  gpio_num_t mic_sck, gpio_num_t mic_ws, gpio_num_t mic_din)
+          : AudioInputDevice(input_sample_rate, mic_sck, mic_ws, mic_din),
+            AudioOutputDevice(output_sample_rate, spk_bclk, spk_ws, spk_dout) {}
+    };
+
+    static AudioDevice audio_codec(
         AUDIO_INPUT_SAMPLE_RATE, AUDIO_OUTPUT_SAMPLE_RATE,
         AUDIO_I2S_SPK_GPIO_BCLK, AUDIO_I2S_SPK_GPIO_LRCK,
-        AUDIO_I2S_SPK_GPIO_DOUT, I2S_STD_SLOT_BOTH, AUDIO_I2S_MIC_GPIO_SCK,
-        AUDIO_I2S_MIC_GPIO_WS, AUDIO_I2S_MIC_GPIO_DIN, I2S_STD_SLOT_LEFT);
+        AUDIO_I2S_SPK_GPIO_DOUT, AUDIO_I2S_MIC_GPIO_SCK, AUDIO_I2S_MIC_GPIO_WS,
+        static_cast<gpio_num_t>(AUDIO_I2S_MIC_GPIO_DIN));
     return &audio_codec;
   }
 
   virtual Display* GetDisplay() override { return display_; }
 };
 
-DECLARE_BOARD(EmakefunEsp32IotBoard);
+DECLARE_BOARD(EmakefunEsp32);

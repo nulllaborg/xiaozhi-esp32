@@ -158,8 +158,8 @@ choice BOARD_TYPE
         bool "SenseCAP Watcher"
     config BOARD_TYPE_NULLLAB_AI_VOX
         bool "Nulllab AI Vox"
-    config BOARD_TYPE_EMAKEFUN_ESP32_IOT_BOARD
-        bool "Emakefun ESP32 Iot Board"
+    config BOARD_TYPE_EMAKEFUN_ESP32
+        bool "Emakefun ESP32"
 endchoice
 
 choice DISPLAY_OLED_TYPE
@@ -255,4 +255,34 @@ config USE_REALTIME_CHAT
     help
         需要 ESP32 S3 与 AEC 开启，因为性能不够，不建议和微信聊天界面风格同时开启
         
+choice MIC_TYPE
+    depends on BOARD_TYPE_EMAKEFUN_ESP32
+    prompt "Mic Type"
+    default MIC_TYPE_INMP441
+    help
+        麦克风类型选择
+    config MIC_TYPE_INMP441
+        bool "INMP441"
+    config MIC_TYPE_SPH0645
+        bool "SPH0645"
+endchoice
+
+choice
+    depends on BOARD_TYPE_EMAKEFUN_ESP32
+    prompt "选择麦克风数据引脚"
+    default MIC_DIN_PIN_27
+    help
+        麦克风数据引脚选择
+
+    config MIC_DIN_PIN_27
+        bool "GPIO 27"    # 配置项显示文本
+
+    config MIC_DIN_PIN_19
+        bool "GPIO 19"    # 配置项显示文本
+endchoice
+
+config MIC_DIN_PIN
+    int
+    default 27 if MIC_DIN_PIN_27
+    default 19 if MIC_DIN_PIN_19
 endmenu
