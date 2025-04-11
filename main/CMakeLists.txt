@@ -136,8 +136,8 @@ elseif(CONFIG_BOARD_TYPE_ESP32_CGC)
     set(BOARD_TYPE "esp32-cgc")
 elseif(CONFIG_BOARD_TYPE_NULLLAB_AI_VOX)
     set(BOARD_TYPE "nulllab-ai-vox")
-elseif(CONFIG_BOARD_TYPE_EMAKEFUN_ESP32)
-    set(BOARD_TYPE "emakefun-esp32")
+elseif(CONFIG_BOARD_TYPE_NULLLAB_ESP32)
+    set(BOARD_TYPE "nulllab-esp32")
 endif()
 file(GLOB BOARD_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD_TYPE}/*.cc

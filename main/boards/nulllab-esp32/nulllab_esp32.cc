@@ -16,12 +16,12 @@
 #include "system_reset.h"
 #include "wifi_board.h"
 
-#define TAG "EmakefunEsp32"
+#define TAG "NulllabEsp32"
 
 LV_FONT_DECLARE(font_puhui_14_1);
 LV_FONT_DECLARE(font_awesome_14_1);
 
-class EmakefunEsp32 : public WifiBoard {
+class NulllabEsp32 : public WifiBoard {
  private:
   Button boot_button_;
 
@@ -118,7 +118,7 @@ class EmakefunEsp32 : public WifiBoard {
   }
 
  public:
-  EmakefunEsp32() : boot_button_(BOOT_BUTTON_GPIO) {
+  NulllabEsp32() : boot_button_(BOOT_BUTTON_GPIO) {
     InitializeDisplayI2c();
     InitializeSsd1306Display();
     InitializeButtons();
@@ -146,4 +146,4 @@ class EmakefunEsp32 : public WifiBoard {
   virtual Display* GetDisplay() override { return display_; }
 };
 
-DECLARE_BOARD(EmakefunEsp32);
+DECLARE_BOARD(NulllabEsp32);
