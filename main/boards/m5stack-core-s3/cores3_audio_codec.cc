@@ -1,12 +1,11 @@
 #include "cores3_audio_codec.h"
 
 #include <esp_log.h>
-#include <driver/i2c.h>
 #include <driver/i2c_master.h>
 #include <driver/i2s_tdm.h>
 
 
-static const char TAG[] = "CoreS3AudioCodec";
+#define TAG "CoreS3AudioCodec"
 
 CoreS3AudioCodec::CoreS3AudioCodec(void* i2c_master_handle, int input_sample_rate, int output_sample_rate,
     gpio_num_t mclk, gpio_num_t bclk, gpio_num_t ws, gpio_num_t dout, gpio_num_t din,
@@ -65,7 +64,7 @@ CoreS3AudioCodec::CoreS3AudioCodec(void* i2c_master_handle, int input_sample_rat
 
     es7210_codec_cfg_t es7210_cfg = {};
     es7210_cfg.ctrl_if = in_ctrl_if_;
-    es7210_cfg.mic_selected = ES7120_SEL_MIC1 | ES7120_SEL_MIC2 | ES7120_SEL_MIC3;
+    es7210_cfg.mic_selected = ES7210_SEL_MIC1 | ES7210_SEL_MIC2 | ES7210_SEL_MIC3;
     in_codec_if_ = es7210_codec_new(&es7210_cfg);
     assert(in_codec_if_ != NULL);
 
@@ -99,8 +98,8 @@ void CoreS3AudioCodec::CreateDuplexChannels(gpio_num_t mclk, gpio_num_t bclk, gp
     i2s_chan_config_t chan_cfg = {
         .id = I2S_NUM_0,
         .role = I2S_ROLE_MASTER,
-        .dma_desc_num = 6,
-        .dma_frame_num = 240,
+        .dma_desc_num = AUDIO_CODEC_DMA_DESC_NUM,
+        .dma_frame_num = AUDIO_CODEC_DMA_FRAME_NUM,
         .auto_clear_after_cb = true,
         .auto_clear_before_cb = false,
         .intr_priority = 0,
@@ -202,7 +201,7 @@ void CoreS3AudioCodec::EnableInput(bool enable) {
             fs.channel_mask |= ESP_CODEC_DEV_MAKE_CHANNEL_MASK(1);
         }
         ESP_ERROR_CHECK(esp_codec_dev_open(input_dev_, &fs));
-        ESP_ERROR_CHECK(esp_codec_dev_set_in_channel_gain(input_dev_, ESP_CODEC_DEV_MAKE_CHANNEL_MASK(0), 40.0));
+        ESP_ERROR_CHECK(esp_codec_dev_set_in_channel_gain(input_dev_, ESP_CODEC_DEV_MAKE_CHANNEL_MASK(0), AUDIO_CODEC_DEFAULT_MIC_GAIN));
     } else {
         ESP_ERROR_CHECK(esp_codec_dev_close(input_dev_));
     }

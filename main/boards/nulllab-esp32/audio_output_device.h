@@ -5,7 +5,7 @@
 
 #include <cmath>
 
-#include "audio_codecs/audio_codec.h"
+#include "audio/audio_codec.h"
 
 class AudioOutputDevice : virtual public AudioCodec {
  public:

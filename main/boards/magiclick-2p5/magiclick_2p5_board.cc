@@ -1,13 +1,11 @@
-#include "wifi_board.h"
+#include "dual_network_board.h"
 #include "display/lcd_display.h"
-#include "audio_codecs/es8311_audio_codec.h"
+#include "codecs/es8311_audio_codec.h"
 #include "application.h"
 #include "button.h"
 #include "led/circular_strip.h"
-#include "iot/thing_manager.h"
 #include "config.h"
 #include "assets/lang_config.h"
-#include "font_awesome_symbols.h"
 
 #include <esp_lcd_panel_vendor.h>
 #include <wifi_station.h>
@@ -20,6 +18,7 @@
 
 #include "power_manager.h"
 #include "power_save_timer.h"
+#include "esp_wifi.h"
 
 #define TAG "magiclick_2p5"
 
@@ -73,7 +72,7 @@ static const gc9a01_lcd_init_cmd_t gc9107_lcd_init_cmds[] = {
     {0xba, (uint8_t[]){0xFF, 0xFF}, 2, 0},
 };
 
-class magiclick_2p5 : public WifiBoard {
+class magiclick_2p5 : public DualNetworkBoard {
 private:
     i2c_master_bus_handle_t codec_i2c_bus_;
     Button main_button_;
@@ -102,18 +101,28 @@ private:
     void InitializePowerSaveTimer() {
         power_save_timer_ = new PowerSaveTimer(240, 60, -1);
         power_save_timer_->OnEnterSleepMode([this]() {
-            ESP_LOGI(TAG, "Enabling sleep mode");
-            display_->SetChatMessage("system", "");
-            display_->SetEmotion("sleepy");
+            GetDisplay()->SetPowerSaveMode(true);
             GetBacklight()->SetBrightness(1);
         });
         power_save_timer_->OnExitSleepMode([this]() {
-            display_->SetChatMessage("system", "");
-            display_->SetEmotion("neutral");
+            GetDisplay()->SetPowerSaveMode(false);
             GetBacklight()->RestoreBrightness();
         });
          
         power_save_timer_->SetEnabled(true);
+    }
+
+    void Enable4GModule() {
+        // enable the 4G module
+        gpio_reset_pin(ML307_POWER_PIN);
+        gpio_set_direction(ML307_POWER_PIN, GPIO_MODE_OUTPUT);
+        gpio_set_level(ML307_POWER_PIN, ML307_POWER_OUTPUT_INVERT ? 0 : 1);
+    }
+    void Disable4GModule() {
+        // enable the 4G module
+        gpio_reset_pin(ML307_POWER_PIN);
+        gpio_set_direction(ML307_POWER_PIN, GPIO_MODE_OUTPUT);
+        gpio_set_level(ML307_POWER_PIN, ML307_POWER_OUTPUT_INVERT ? 1 : 0);
     }
 
     void InitializeCodecI2c() {
@@ -133,11 +142,37 @@ private:
         ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_cfg, &codec_i2c_bus_));
     }
 
+    void CheckNetType() {
+        if (GetNetworkType() == NetworkType::WIFI) {
+            Disable4GModule();
+        } else if (GetNetworkType() == NetworkType::ML307) {
+            Enable4GModule();
+        }
+        
+    }
+
+
     void InitializeButtons() {
         main_button_.OnClick([this]() {
             auto& app = Application::GetInstance();
-            if (app.GetDeviceState() == kDeviceStateStarting && !WifiStation::GetInstance().IsConnected()) {
-                ResetWifiConfiguration();
+            if (GetNetworkType() == NetworkType::WIFI) {
+                if (app.GetDeviceState() == kDeviceStateStarting && !WifiStation::GetInstance().IsConnected()) {
+                    // cast to WifiBoard
+                    auto& wifi_board = static_cast<WifiBoard&>(GetCurrentBoard());
+                    wifi_board.ResetWifiConfiguration();
+                    Disable4GModule();
+                }
+            } else if(GetNetworkType() == NetworkType::ML307) {
+                
+                Enable4GModule();
+                // stop WiFi
+                esp_wifi_stop();
+            }
+        });        
+        main_button_.OnDoubleClick([this]() {
+            auto& app = Application::GetInstance();
+            if (app.GetDeviceState() == kDeviceStateStarting || app.GetDeviceState() == kDeviceStateWifiConfiguring) {
+                SwitchNetworkType();
             }
         });
         main_button_.OnPressDown([this]() {
@@ -149,11 +184,7 @@ private:
         });
 
         left_button_.OnClick([this]() {
-            power_save_timer_->WakeUp();
-            auto& app = Application::GetInstance();
-            if (app.GetDeviceState() == kDeviceStateStarting && !WifiStation::GetInstance().IsConnected()) {
-                ResetWifiConfiguration();
-            }
+            power_save_timer_->WakeUp();            
             auto codec = GetAudioCodec();
             auto volume = codec->output_volume() - 10;
             if (volume < 0) {
@@ -245,26 +276,19 @@ private:
                                     DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
     }
 
-    // 物联网初始化，添加对 AI 可见设备
-    void InitializeIot() {
-        auto& thing_manager = iot::ThingManager::GetInstance();
-        thing_manager.AddThing(iot::CreateThing("Speaker"));
-        thing_manager.AddThing(iot::CreateThing("Screen"));
-    }
-
 public:
-    magiclick_2p5() :
+    magiclick_2p5() : DualNetworkBoard(ML307_TX_PIN, ML307_RX_PIN, GPIO_NUM_NC, 0),
         main_button_(MAIN_BUTTON_GPIO),
         left_button_(LEFT_BUTTON_GPIO), 
         right_button_(RIGHT_BUTTON_GPIO) {
         InitializeLedPower();
+        CheckNetType();
         InitializePowerManager();
         InitializePowerSaveTimer();
         InitializeCodecI2c();
         InitializeButtons();
         InitializeSpi();
         InitializeGc9107Display();
-        InitializeIot();
         GetBacklight()->RestoreBrightness();
     }
 
@@ -305,7 +329,7 @@ public:
         if (!enabled) {
             power_save_timer_->WakeUp();
         }
-        WifiBoard::SetPowerSaveMode(enabled);
+        DualNetworkBoard::SetPowerSaveMode(enabled);
     }
 };
 

@@ -1,5 +1,4 @@
 #include "oled_display.h"
-#include "font_awesome_symbols.h"
 #include "assets/lang_config.h"
 
 #include <string>
@@ -8,6 +7,7 @@
 #include <esp_log.h>
 #include <esp_err.h>
 #include <esp_lvgl_port.h>
+#include <font_awesome.h>
 
 #define TAG "OledDisplay"
 
@@ -22,10 +22,10 @@ OledDisplay::OledDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handl
     ESP_LOGI(TAG, "Initialize LVGL");
     lvgl_port_cfg_t port_cfg = ESP_LVGL_PORT_INIT_CONFIG();
     port_cfg.task_priority = 1;
-    port_cfg.timer_period_ms = 50;
+    port_cfg.task_stack = 6144;
     lvgl_port_init(&port_cfg);
 
-    ESP_LOGI(TAG, "Adding LCD screen");
+    ESP_LOGI(TAG, "Adding OLED display");
     const lvgl_port_display_cfg_t display_cfg = {
         .io_handle = panel_io_,
         .panel_handle = panel_,
@@ -111,7 +111,7 @@ void OledDisplay::SetChatMessage(const char* role, const char* content) {
             lv_obj_add_flag(content_right_, LV_OBJ_FLAG_HIDDEN);
         } else {
             lv_label_set_text(chat_message_label_, content_str.c_str());
-            lv_obj_clear_flag(content_right_, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(content_right_, LV_OBJ_FLAG_HIDDEN);
         }
     }
 }
@@ -156,7 +156,7 @@ void OledDisplay::SetupUI_128x64() {
 
     emotion_label_ = lv_label_create(content_left_);
     lv_obj_set_style_text_font(emotion_label_, &font_awesome_30_1, 0);
-    lv_label_set_text(emotion_label_, FONT_AWESOME_AI_CHIP);
+    lv_label_set_text(emotion_label_, FONT_AWESOME_MICROCHIP_AI);
     lv_obj_center(emotion_label_);
     lv_obj_set_style_pad_top(emotion_label_, 8, 0);
 
@@ -218,10 +218,10 @@ void OledDisplay::SetupUI_128x64() {
     lv_obj_align(low_battery_popup_, LV_ALIGN_BOTTOM_MID, 0, 0);
     lv_obj_set_style_bg_color(low_battery_popup_, lv_color_black(), 0);
     lv_obj_set_style_radius(low_battery_popup_, 10, 0);
-    lv_obj_t* low_battery_label = lv_label_create(low_battery_popup_);
-    lv_label_set_text(low_battery_label, Lang::Strings::BATTERY_NEED_CHARGE);
-    lv_obj_set_style_text_color(low_battery_label, lv_color_white(), 0);
-    lv_obj_center(low_battery_label);
+    low_battery_label_ = lv_label_create(low_battery_popup_);
+    lv_label_set_text(low_battery_label_, Lang::Strings::BATTERY_NEED_CHARGE);
+    lv_obj_set_style_text_color(low_battery_label_, lv_color_white(), 0);
+    lv_obj_center(low_battery_label_);
     lv_obj_add_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN);
 }
 
@@ -248,7 +248,7 @@ void OledDisplay::SetupUI_128x32() {
 
     emotion_label_ = lv_label_create(content_);
     lv_obj_set_style_text_font(emotion_label_, &font_awesome_30_1, 0);
-    lv_label_set_text(emotion_label_, FONT_AWESOME_AI_CHIP);
+    lv_label_set_text(emotion_label_, FONT_AWESOME_MICROCHIP_AI);
     lv_obj_center(emotion_label_);
 
     /* Right side */
