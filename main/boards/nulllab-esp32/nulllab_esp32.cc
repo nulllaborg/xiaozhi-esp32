@@ -5,13 +5,12 @@
 #include <wifi_station.h>
 
 #include "application.h"
-#include "audio_codecs/no_audio_codec.h"
+#include "audio/codecs/no_audio_codec.h"
 #include "audio_input_device.h"
 #include "audio_output_device.h"
 #include "button.h"
 #include "config.h"
 #include "display/oled_display.h"
-#include "iot/thing_manager.h"
 #include "led/single_led.h"
 #include "system_reset.h"
 #include "wifi_board.h"
@@ -112,9 +111,9 @@ class NulllabEsp32 : public WifiBoard {
 
   // 物联网初始化，添加对 AI 可见设备
   void InitializeIot() {
-    auto& thing_manager = iot::ThingManager::GetInstance();
-    thing_manager.AddThing(iot::CreateThing("Speaker"));
-    thing_manager.AddThing(iot::CreateThing("Lamp"));
+    // auto& thing_manager = iot::ThingManager::GetInstance();
+    // thing_manager.AddThing(iot::CreateThing("Speaker"));
+    // thing_manager.AddThing(iot::CreateThing("Lamp"));
   }
 
  public:
