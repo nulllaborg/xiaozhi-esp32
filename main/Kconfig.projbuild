@@ -301,6 +301,8 @@ choice BOARD_TYPE
         depends on IDF_TARGET_ESP32S3
     config BOARD_TYPE_NULLLAB_ESP32
         bool "Nulllab ESP32"
+    config BOARD_TYPE_NULLLAB_ESP32_LCD
+        bool "Nulllab ESP32 LCD"
     config BOARD_TYPE_DOIT_S3_AIBOX
         bool "四博智联AI陪伴盒子"
         depends on IDF_TARGET_ESP32S3
