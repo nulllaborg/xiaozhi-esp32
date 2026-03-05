@@ -1,8 +1,8 @@
-import argparse
-import json
-import os
 import sys
+import os
+import json
 import zipfile
+import argparse
 from pathlib import Path
 from typing import Optional
 
@@ -12,7 +12,6 @@ os.chdir(Path(__file__).resolve().parent.parent)
 ################################################################################
 # Common utility functions
 ################################################################################
-
 
 def get_board_type_from_compile_commands() -> Optional[str]:
     """Parse the current compiled BOARD_TYPE from build/compile_commands.json"""
@@ -25,8 +24,8 @@ def get_board_type_from_compile_commands() -> Optional[str]:
         if not item["file"].endswith("main.cc"):
             continue
         cmd = item["command"]
-        if '-DBOARD_TYPE=\\"' in cmd:
-            return cmd.split('-DBOARD_TYPE=\\"')[1].split('\\"')[0].strip()
+        if "-DBOARD_TYPE=\\\"" in cmd:
+            return cmd.split("-DBOARD_TYPE=\\\"")[1].split("\\\"")[0].strip()
     return None
 
 
@@ -35,7 +34,7 @@ def get_project_version() -> Optional[str]:
     with Path("CMakeLists.txt").open() as f:
         for line in f:
             if line.startswith("set(PROJECT_VER"):
-                return line.split('"')[1]
+                return line.split("\"")[1]
     return None
 
 
@@ -57,7 +56,6 @@ def zip_bin(name: str, version: str) -> None:
     with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zipf:
         zipf.write("build/merged-binary.bin", arcname="merged-binary.bin")
     print(f"zip bin to {output_path} done")
-
 
 ################################################################################
 # board / variant related functions
@@ -157,29 +155,20 @@ def _apply_auto_selects(sdkconfig_append: list[str]) -> list[str]:
 
     return items
 
-
 ################################################################################
 # Check board_type in CMakeLists
 ################################################################################
-
 
 def _board_type_exists(board_type: str) -> bool:
     cmake_file = Path("main/CMakeLists.txt")
     pattern = f'set(BOARD_TYPE "{board_type}")'
     return pattern in cmake_file.read_text(encoding="utf-8")
 
-
 ################################################################################
 # Compile implementation
 ################################################################################
 
-
-def release(
-    board_type: str,
-    config_filename: str = "config.json",
-    *,
-    filter_name: Optional[str] = None,
-) -> None:
+def release(board_type: str, config_filename: str = "config.json", *, filter_name: Optional[str] = None) -> None:
     """Compile and package all/specified variants of the specified board_type
 
     Args:
@@ -203,10 +192,7 @@ def release(
     if filter_name:
         builds = [b for b in builds if b["name"] == filter_name]
         if not builds:
-            print(
-                f"[ERROR] 未在 {board_type} 的 {config_filename} 中找到变体 {filter_name}",
-                file=sys.stderr,
-            )
+            print(f"[ERROR] 未在 {board_type} 的 {config_filename} 中找到变体 {filter_name}", file=sys.stderr)
             sys.exit(1)
 
     for build in builds:
@@ -245,10 +231,7 @@ def release(
             for append in sdkconfig_append:
                 f.write(f"{append}\n")
         # Build with macro BOARD_NAME defined to name
-        if (
-            os.system(f"idf.py -DBOARD_NAME={name} -DBOARD_TYPE={board_type} build")
-            != 0
-        ):
+        if os.system(f"idf.py -DBOARD_NAME={name} -DBOARD_TYPE={board_type} build") != 0:
             print("build failed")
             sys.exit(1)
 
@@ -258,7 +241,6 @@ def release(
         # Zip
         zip_bin(name, project_version)
 
-
 ################################################################################
 # CLI entry
 ################################################################################
@@ -266,18 +248,9 @@ def release(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("board", nargs="?", default=None, help="板子类型或 all")
-    parser.add_argument(
-        "-c",
-        "--config",
-        default="config.json",
-        help="指定 config 文件名，默认 config.json",
-    )
-    parser.add_argument(
-        "--list-boards", action="store_true", help="列出所有支持的 board 及变体列表"
-    )
-    parser.add_argument(
-        "--json", action="store_true", help="配合 --list-boards，JSON 格式输出"
-    )
+    parser.add_argument("-c", "--config", default="config.json", help="指定 config 文件名，默认 config.json")
+    parser.add_argument("--list-boards", action="store_true", help="列出所有支持的 board 及变体列表")
+    parser.add_argument("--json", action="store_true", help="配合 --list-boards，JSON 格式输出")
     parser.add_argument("--name", help="指定变体名称，仅编译匹配的变体")
 
     args = parser.parse_args()
@@ -305,14 +278,11 @@ if __name__ == "__main__":
 
     # Compile mode
     board_type_input: str = args.board
-    name_filter: str = args.name
+    name_filter: Optional[str] = args.name
 
     # Check board_type in CMakeLists
     if board_type_input != "all" and not _board_type_exists(board_type_input):
-        print(
-            f"[ERROR] main/CMakeLists.txt 中未找到 board_type {board_type_input}",
-            file=sys.stderr,
-        )
+        print(f"[ERROR] main/CMakeLists.txt 中未找到 board_type {board_type_input}", file=sys.stderr)
         sys.exit(1)
 
     variants_all = _collect_variants(config_filename=args.config)
@@ -326,16 +296,10 @@ if __name__ == "__main__":
 
     for bt in sorted(target_board_types):
         if not _board_type_exists(bt):
-            print(
-                f"[ERROR] main/CMakeLists.txt 中未找到 board_type {bt}", file=sys.stderr
-            )
+            print(f"[ERROR] main/CMakeLists.txt 中未找到 board_type {bt}", file=sys.stderr)
             sys.exit(1)
         cfg_path = _BOARDS_DIR / bt / args.config
         if bt == board_type_input and not cfg_path.exists():
             print(f"开发板 {bt} 未定义 {args.config} 配置文件，跳过")
             sys.exit(0)
-        release(
-            bt,
-            config_filename=args.config,
-            filter_name=name_filter if bt == board_type_input else None,
-        )
+        release(bt, config_filename=args.config, filter_name=name_filter if bt == board_type_input else None)

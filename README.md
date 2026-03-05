@@ -1,23 +1,3 @@
-## AI-VOX3 介绍
-
-硬件详细介绍请见：https://dcnmu33qx4fc.feishu.cn/docx/VXHzdBYH0ohpNAxw2ifc3P2InBe
-
-## 开发环境搭建：
-
-请直接参考虾哥官方DIY文档[IDF环境搭建](https://icnynnzcwou8.feishu.cn/wiki/JEYDwTTALi5s2zkGlFGcDiRknXf)，这里不再重复介绍，建议编译AI-VOX3之前，先编译成功虾哥官方源码，即证明环境搭建正确。
-
-**NULLLAB修改记录：**
-
-- 增加 NULLLAB AI-VOX3 开发板
-  - NULLLAB AI-VOX3 支持实时打断，可以随时打断小智说话，默认开启 `CONFIG_USE_DEVICE_AEC=y`
-  - NULLLAB AI-VOX3 支持双网络，默认使用 WIFI 网络，在开机后长按 BOOT 键可以切换到 4G 网络。要修改默认网络，打开 `config.h` 文件，修改 `#define DEFAULT_4G_NETWORK 1`。
-- 编译配置通过 idf.py menuconfig 进行设置或在开发板的 config.json 中设置（推荐）
-
-**官方推荐使用编译脚本进行编译：`python ./scripts/release.py ai-vox3`，省去切换开发板配置。**
-案例所需要的配置都写在了 config.json 文件中，编译脚本可以自动完成配置。
-
----
-
 # An MCP-based Chatbot
 
 (English | [中文](README_zh.md) | [日本語](README_ja.md))
@@ -160,6 +140,7 @@ For server deployment on personal computers, refer to the following open-source 
 - [xinnan-tech/xiaozhi-esp32-server](https://github.com/xinnan-tech/xiaozhi-esp32-server) Python server
 - [joey-zhou/xiaozhi-esp32-server-java](https://github.com/joey-zhou/xiaozhi-esp32-server-java) Java server
 - [AnimeAIChat/xiaozhi-server-go](https://github.com/AnimeAIChat/xiaozhi-server-go) Golang server
+- [hackers365/xiaozhi-esp32-server-golang](https://github.com/hackers365/xiaozhi-esp32-server-golang) Golang server
 
 Other client projects using the XiaoZhi communication protocol:
 
@@ -179,7 +160,7 @@ This is an open-source ESP32 project, released under the MIT license, allowing a
 
 We hope this project helps everyone understand AI hardware development and apply rapidly evolving large language models to real hardware devices.
 
-If you have any ideas or suggestions, please feel free to raise Issues or join the QQ group: 1011329060
+If you have any ideas or suggestions, please feel free to raise Issues or join our [Discord](https://discord.gg/bXqgAfRm) or QQ group: 994694848
 
 ## Star History
 
@@ -189,4 +170,4 @@ If you have any ideas or suggestions, please feel free to raise Issues or join t
    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=78/xiaozhi-esp32&type=Date" />
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=78/xiaozhi-esp32&type=Date" />
  </picture>
-</a>
+</a> 
