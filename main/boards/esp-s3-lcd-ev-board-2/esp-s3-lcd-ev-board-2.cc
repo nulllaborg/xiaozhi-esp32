@@ -5,7 +5,7 @@
 #include "button.h"
 #include "led/single_led.h"
 #include "pin_config.h"
-#include "esp32_camera.h"
+#include "esp_video.h"
 
 #include "config.h"
 
@@ -27,7 +27,7 @@ private:
     i2c_master_bus_handle_t i2c_bus_;
     Button boot_button_;
     LcdDisplay* display_;
-    Esp32Camera* camera_;
+    EspVideo* camera_;
 
     //add support ev board lcd
     esp_io_expander_handle_t expander = NULL;
@@ -186,7 +186,16 @@ private:
             },
         };
         esp_lcd_panel_io_handle_t tp_io_handle = NULL;
-        esp_lcd_panel_io_i2c_config_t tp_io_config = ESP_LCD_TOUCH_IO_I2C_GT1151_CONFIG();
+        esp_lcd_panel_io_i2c_config_t tp_io_config = {
+            .dev_addr = ESP_LCD_TOUCH_IO_I2C_GT1151_ADDRESS,
+            .control_phase_bytes = 1,
+            .dc_bit_offset = 0,
+            .lcd_cmd_bits = 16,
+            .flags =
+            {
+                .disable_control_phase = 1,
+            }
+        };
         tp_io_config.scl_speed_hz = 400 * 1000;
         ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c(i2c_bus_, &tp_io_config, &tp_io_handle));
         ESP_ERROR_CHECK(esp_lcd_touch_new_i2c_gt1151(tp_io_handle, &tp_cfg, &tp));
@@ -218,7 +227,7 @@ private:
         esp_video_init_config_t video_config = {
             .usb_uvc = &usb_uvc_config,
         };
-        camera_ = new Esp32Camera(video_config);
+        camera_ = new EspVideo(video_config);
     }
 #endif // CONFIG_ESP_VIDEO_ENABLE_USB_UVC_VIDEO_DEVICE
 

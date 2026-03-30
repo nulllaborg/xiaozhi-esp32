@@ -7,7 +7,7 @@
 #include "application.h"
 #include "button.h"
 #include "config.h"
-#include "esp32_camera.h"
+#include "esp_video.h"
 #include "esp_video_init.h"
 #include "esp_cam_sensor_xclk.h"
 
@@ -89,7 +89,7 @@ private:
     i2c_master_bus_handle_t i2c_bus_;
     Button boot_button_;
     LcdDisplay* display_;
-    Esp32Camera* camera_ = nullptr;
+    EspVideo* camera_ = nullptr;
     Pi4ioe1* pi4ioe1_;
     Pi4ioe2* pi4ioe2_;
     esp_lcd_touch_handle_t touch_ = nullptr;
@@ -178,7 +178,15 @@ private:
             },
         };
         esp_lcd_panel_io_handle_t tp_io_handle = NULL;
-        esp_lcd_panel_io_i2c_config_t tp_io_config = ESP_LCD_TOUCH_IO_I2C_GT911_CONFIG();
+        esp_lcd_panel_io_i2c_config_t tp_io_config = {
+	        .control_phase_bytes = 1,
+            .dc_bit_offset = 0,
+            .lcd_cmd_bits = 16,                            
+            .flags =
+            {
+                .disable_control_phase = 1,
+            }
+	    };
         tp_io_config.dev_addr = ESP_LCD_TOUCH_IO_I2C_GT911_ADDRESS_BACKUP; // 更改 GT911 地址 
         tp_io_config.scl_speed_hz = 100000;
         esp_lcd_new_panel_io_i2c(i2c_bus_, &tp_io_config, &tp_io_handle);
@@ -463,7 +471,7 @@ private:
             .csi = &csi_config,
         };
 
-        camera_ = new Esp32Camera(video_config);
+        camera_ = new EspVideo(video_config);
     }
 
 public:

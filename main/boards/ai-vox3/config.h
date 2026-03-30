@@ -1,6 +1,8 @@
 #pragma once
 #include <driver/gpio.h>
 
+#define DEFAULT_4G_NETWORK 0
+
 #if CONFIG_USE_DEVICE_AEC
 #define AUDIO_INPUT_REFERENCE true
 #else
