@@ -1,0 +1,13 @@
+{
+  "target": "esp32s3",
+  "builds": [
+    {
+      "name": "scratch-arcade",
+      "sdkconfig_append": [
+        "CONFIG_USE_WECHAT_MESSAGE_STYLE=y",
+        "CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y",
+        "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"main/boards/scratch-arcade/partitions_8M.csv\""
+      ]
+    }
+  ]
+}
