@@ -8,6 +8,8 @@
 
 **NULLLAB修改记录：**
 
+- AI-VOX3 已合并到 xiaozhi-esp32 官方版本（[boards/nulllab-ai-vox-v3](https://github.com/78/xiaozhi-esp32/tree/main/main/boards/nulllab-ai-vox-v3)），可以使用虾哥官方教程直接进行编译，并且版本会随官方版本自动升级。
+
 - 增加 NULLLAB AI-VOX3 开发板
   - NULLLAB AI-VOX3 支持实时打断，可以随时打断小智说话，默认开启 `CONFIG_USE_DEVICE_AEC=y`
   - NULLLAB AI-VOX3 支持双网络，默认使用 WIFI 网络，在开机后长按 BOOT 键可以切换到 4G 网络。要修改默认网络，打开 `config.h` 文件，修改 `#define DEFAULT_4G_NETWORK 1`。
