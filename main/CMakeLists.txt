@@ -76,18 +76,27 @@ function(find_component_by_pattern PATTERN COMPONENT_VAR PATH_VAR)
     endforeach()
 endfunction()
 
-# Set default BUILTIN_TEXT_FONT and BUILTIN_ICON_FONT
+
 set(BUILTIN_TEXT_FONT font_puhui_14_1)
 set(BUILTIN_ICON_FONT font_awesome_14_1)
 
 set(EMOTE_RESOLUTION "320_240")
 
-# Add board files according to BOARD_TYPE
-# Set default assets if the board uses partition table V2
+
 if(CONFIG_BOARD_TYPE_BREAD_COMPACT_WIFI)
     set(BOARD_TYPE "bread-compact-wifi")
     set(BUILTIN_TEXT_FONT font_puhui_basic_14_1)
     set(BUILTIN_ICON_FONT font_awesome_14_1)
+elseif(CONFIG_BOARD_TYPE_NULLLAB_ESP32S3_LCD)
+    set(BOARD_TYPE "nulllab-esp32s3-lcd")
+    set(BUILTIN_TEXT_FONT font_puhui_basic_20_4)
+    set(BUILTIN_ICON_FONT font_awesome_20_4)
+    set(DEFAULT_EMOJI_COLLECTION twemoji_64)
+elseif(CONFIG_BOARD_TYPE_NULLLAB_ESP32_LCD)
+    set(BOARD_TYPE "nulllab-esp32-lcd")
+    set(BUILTIN_TEXT_FONT font_puhui_basic_20_4)
+    set(BUILTIN_ICON_FONT font_awesome_20_4)
+    set(DEFAULT_EMOJI_COLLECTION twemoji_32)
 elseif(CONFIG_BOARD_TYPE_BREAD_COMPACT_ML307)
     set(BOARD_TYPE "bread-compact-ml307")
     set(BUILTIN_TEXT_FONT font_puhui_basic_14_1)
@@ -641,11 +650,6 @@ elseif(CONFIG_BOARD_TYPE_HU_087)
     set(BOARD_TYPE "hu-087")
     set(BUILTIN_TEXT_FONT font_puhui_basic_14_1)
     set(BUILTIN_ICON_FONT font_awesome_14_1)
-elseif(CONFIG_BOARD_TYPE_NULLLAB_ESP32_LCD)
-    set(BOARD_TYPE "nulllab-esp32-lcd")
-    set(BUILTIN_TEXT_FONT font_puhui_basic_20_4)
-    set(BUILTIN_ICON_FONT font_awesome_20_4)
-    set(DEFAULT_EMOJI_COLLECTION twemoji_32)
 endif()
 
 file(GLOB BOARD_SOURCES
