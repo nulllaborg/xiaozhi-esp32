@@ -34,16 +34,6 @@ void AudioCodec::Start() {
         output_volume_ = 10;
     }
 
-    if (tx_handle_ != nullptr) {
-        ESP_ERROR_CHECK(i2s_channel_enable(tx_handle_));
-    }
-
-    if (rx_handle_ != nullptr) {
-        ESP_ERROR_CHECK(i2s_channel_enable(rx_handle_));
-    }
-
-    EnableInput(true);
-    EnableOutput(true);
     ESP_LOGI(TAG, "Audio codec started");
 }
 
@@ -53,6 +43,11 @@ void AudioCodec::SetOutputVolume(int volume) {
     
     Settings settings("audio", true);
     settings.SetInt("output_volume", output_volume_);
+}
+
+void AudioCodec::SetInputGain(float gain) {
+    input_gain_ = gain;
+    ESP_LOGI(TAG, "Set input gain to %.1f", input_gain_);
 }
 
 void AudioCodec::EnableInput(bool enable) {

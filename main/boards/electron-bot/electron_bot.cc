@@ -5,7 +5,6 @@
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_vendor.h>
 #include <esp_log.h>
-#include <wifi_station.h>
 
 #include "application.h"
 #include "codecs/no_audio_codec.h"
@@ -17,6 +16,7 @@
 #include "movements.h"
 #include "power_manager.h"
 #include "system_reset.h"
+#include "websocket_control_server.h"
 #include "wifi_board.h"
 
 #define TAG "ElectronBot"
@@ -24,14 +24,12 @@
 // 控制器初始化函数声明
 void InitializeElectronBotController();
 
-LV_FONT_DECLARE(font_puhui_20_4);
-LV_FONT_DECLARE(font_awesome_20_4);
-
 class ElectronBot : public WifiBoard {
 private:
     Display* display_;
     PowerManager* power_manager_;
     Button boot_button_;
+    WebSocketControlServer* ws_control_server_;
 
     void InitializePowerManager() {
         power_manager_ =
@@ -61,7 +59,7 @@ private:
         esp_lcd_panel_handle_t panel_handle = NULL;
         esp_lcd_panel_dev_config_t panel_config = {};
         panel_config.reset_gpio_num = DISPLAY_SPI_RESET_PIN;  // Set to -1 if not use
-        panel_config.rgb_endian = LCD_RGB_ENDIAN_BGR;         // LCD_RGB_ENDIAN_RGB;
+        panel_config.rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR;
         panel_config.bits_per_pixel = 16;  // Implemented by LCD command `3Ah` (16/18)
 
         ESP_ERROR_CHECK(esp_lcd_new_panel_gc9a01(io_handle, &panel_config, &panel_handle));
@@ -73,20 +71,15 @@ private:
 
         display_ = new ElectronEmojiDisplay(io_handle, panel_handle, DISPLAY_WIDTH, DISPLAY_HEIGHT,
                                             DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, DISPLAY_MIRROR_X,
-                                            DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY,
-                                            {
-                                                .text_font = &font_puhui_20_4,
-                                                .icon_font = &font_awesome_20_4,
-                                                .emoji_font = font_emoji_64_init(),
-                                            });
+                                            DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
     }
 
     void InitializeButtons() {
         boot_button_.OnClick([this]() {
             auto& app = Application::GetInstance();
-            if (app.GetDeviceState() == kDeviceStateStarting &&
-                !WifiStation::GetInstance().IsConnected()) {
-                ResetWifiConfiguration();
+            if (app.GetDeviceState() == kDeviceStateStarting) {
+                EnterWifiConfigMode();
+                return;
             }
             app.ToggleChatState();
         });
@@ -94,8 +87,30 @@ private:
 
     void InitializeController() { InitializeElectronBotController(); }
 
+    void InitializeWebSocketControlServer() {
+        ws_control_server_ = new WebSocketControlServer();
+        if (!ws_control_server_->Start(8080)) {
+            delete ws_control_server_;
+            ws_control_server_ = nullptr;
+            return;
+        }
+
+        Application::GetInstance().RegisterMcpBroadcastCallback([this](const std::string& payload) {
+            if (ws_control_server_) {
+                ws_control_server_->BroadcastMessage(payload);
+            }
+        });
+    }
+
+    void StartNetwork() override {
+        WifiBoard::StartNetwork();
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
+        InitializeWebSocketControlServer();
+    }
+
 public:
-    ElectronBot() : boot_button_(BOOT_BUTTON_GPIO) {
+    ElectronBot() : boot_button_(BOOT_BUTTON_GPIO), ws_control_server_(nullptr) {
         InitializeSpi();
         InitializeGc9a01Display();
         InitializeButtons();

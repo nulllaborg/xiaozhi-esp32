@@ -1,41 +1,39 @@
 # MCP ベースのチャットボット
 
-（日本語 | [中文](README.md) | [English](README_en.md)）
+（日本語 | [中文](README_zh.md) | [English](README.md)）
 
-## 動画
+## はじめに
 
 👉 [人間：AIにカメラを装着 vs AI：その場で飼い主が3日間髪を洗っていないことを発見【bilibili】](https://www.bilibili.com/video/BV1bpjgzKEhd/)
 
 👉 [手作りでAIガールフレンドを作る、初心者入門チュートリアル【bilibili】](https://www.bilibili.com/video/BV1XnmFYLEJN/)
 
-## イントロダクション
-
-これはエビ兄さんがオープンソースで公開しているESP32プロジェクトで、MITライセンスのもと、誰でも無料で、商用利用も可能です。
-
-このプロジェクトを通じて、AIハードウェア開発を理解し、急速に進化する大規模言語モデルを実際のハードウェアデバイスに応用できるようになることを目指しています。
-
-ご意見やご提案があれば、いつでもIssueを提出するか、QQグループ：1011329060 にご参加ください。
-
-### MCPであらゆるものを制御
-
 シャオジーAIチャットボットは音声インタラクションの入口として、Qwen / DeepSeekなどの大規模モデルのAI能力を活用し、MCPプロトコルを通じてマルチエンド制御を実現します。
 
-![MCPであらゆるものを制御](docs/mcp-based-graph.jpg)
+<img src="docs/mcp-based-graph.jpg" alt="MCPであらゆるものを制御" width="320">
+
+## 最近の更新
+
+- メインラインはESP-IDF v6.0以降へ移行し、推奨安定版はv6.0.2です。従来の157リリースバリアントはESP-IDF v6.0.1でビルド検証済みです。現在のマトリクスは171バリアントで、そのうち170はIDF 6.0.xに対応し、ESP32-S31バリアントにはIDF 6.1以降が必要です。
+- MQTTとBluFiの暗号処理をPSA Cryptoへ移行し、IDF 6のコンポーネント分割およびサードパーティ依存関係にも対応しました。
+- オーディオパイプラインの並行処理、MQTT/UDPパケット検証、リリースマトリクス選択処理を強化しました。
+- ESP-IDF v5.5は、文書で明記された旧式ボード向けにのみ残しています。ESP-SR 2.4.7を使用すると、ESP32-P4 Rev1とRev3の両方がIDF 6に対応します。詳細な互換性とボード検証状況は、[ESP-IDF 6.0移行ガイド](docs/esp-idf-6-migration.md)を参照してください。
 
 ### 実装済み機能
 
-- Wi-Fi / ML307 Cat.1 4G
-- オフライン音声ウェイクアップ [ESP-SR](https://github.com/espressif/esp-sr)
-- 2種類の通信プロトコルに対応（[Websocket](docs/websocket.md) または MQTT+UDP）
-- OPUSオーディオコーデックを採用
-- ストリーミングASR + LLM + TTSアーキテクチャに基づく音声インタラクション
+- Wi-Fi、有線Ethernet、USB RNDIS、およびML307/EC801EまたはNT26 Cat.1 4Gに対応し、一部のボードではWi-Fiと4Gを切り替え可能
+- [ESP-SR](https://github.com/espressif/esp-sr)によるオフライン音声ウェイクアップとカスタムウェイクワード
+- 2種類の通信方式：[WebSocket](docs/websocket.md)と[MQTT + UDP](docs/mqtt-udp.md)
+- Opusオーディオストリーミングにより、従来のストリーミングASR + LLM + TTS構成とRealtimeエンドツーエンド音声モデルの両方に対応。AEC対応ハードウェアではリアルタイム全二重対話が可能
 - 話者認識、現在話している人を識別 [3D Speaker](https://github.com/modelscope/3D-Speaker)
-- OLED / LCDディスプレイ、表情表示対応
+- OLED / LCDディスプレイで絵文字や豊かな感情表現を表示し、一部のボードではカメラによる視覚入力にも対応
 - バッテリー表示と電源管理
-- 多言語対応（中国語、英語、日本語）
-- ESP32-C3、ESP32-S3、ESP32-P4チッププラットフォーム対応
+- 38言語の画面表示に対応し、音声プロンプトはローカライズ済みリソースを優先して、未収録時は英語へフォールバック
+- ESP32、ESP32-C3、ESP32-C5、ESP32-C6、ESP32-S3、ESP32-P4チッププラットフォーム
+- ホットスポットまたはBluFiによるWi-Fiプロビジョニング
 - デバイス側MCPによるデバイス制御（音量・明るさ調整、アクション制御など）
 - クラウド側MCPで大規模モデル能力を拡張（スマートホーム制御、PCデスクトップ操作、知識検索、メール送受信など）
+- カスタマイズ可能なウェイクワード、フォント、絵文字、チャット背景、オンラインWeb編集に対応 ([カスタムアセットジェネレーター](https://github.com/78/xiaozhi-assets-generator))
 
 ## ハードウェア
 
@@ -49,10 +47,10 @@ Feishuドキュメントチュートリアルをご覧ください：
 
 ![ブレッドボードデモ](docs/v1/wiring2.jpg)
 
-### 70種類以上のオープンソースハードウェアに対応（一部のみ表示）
+### 138のボードディレクトリと171のリリースバリアントに対応（一部のみ表示）
 
 - <a href="https://oshwhub.com/li-chuang-kai-fa-ban/li-chuang-shi-zhan-pai-esp32-s3-kai-fa-ban" target="_blank" title="立創・実戦派 ESP32-S3 開発ボード">立創・実戦派 ESP32-S3 開発ボード</a>
-- <a href="https://github.com/espressif/esp-box" target="_blank" title="楽鑫 ESP32-S3-BOX3">楽鑫 ESP32-S3-BOX3</a>
+- <a href="https://github.com/espressif/esp-box" target="_blank" title="楽鑫 ESP32-S3-BOX-3">楽鑫 ESP32-S3-BOX-3</a>
 - <a href="https://docs.m5stack.com/zh_CN/core/CoreS3" target="_blank" title="M5Stack CoreS3">M5Stack CoreS3</a>
 - <a href="https://docs.m5stack.com/en/atom/Atomic%20Echo%20Base" target="_blank" title="AtomS3R + Echo Base">M5Stack AtomS3R + Echo Base</a>
 - <a href="https://gf.bilibili.com/item/detail/1108782064" target="_blank" title="マジックボタン2.4">マジックボタン2.4</a>
@@ -116,15 +114,17 @@ Feishuドキュメントチュートリアルをご覧ください：
 ### 開発環境
 
 - Cursor または VSCode
-- ESP-IDFプラグインをインストールし、SDKバージョン5.4以上を選択
+- ESP-IDFプラグインをインストールし、[ESP-IDF v6.0.2](https://github.com/espressif/esp-idf/releases/tag/v6.0.2)を優先して使用してください。v6.0以降の安定版を推奨し、ESP-IDF v5.5.2は旧ハードウェアとの互換性維持にのみ使用します
 - LinuxはWindowsよりも優れており、コンパイルが速く、ドライバの問題も少ない
 - 本プロジェクトはGoogle C++コードスタイルを採用、コード提出時は準拠を確認してください
 
 ### 開発者ドキュメント
 
-- [カスタム開発ボードガイド](main/boards/README.md) - シャオジーAI用のカスタム開発ボード作成方法
+- [ESP-IDF 6.0移行ガイド](docs/esp-idf-6-migration.md) - SDK互換性、コンポーネント変更、旧ハードウェア対応、ボード検証状況
+- [カスタム開発ボードガイド](docs/custom-board.md) - シャオジーAI用のカスタム開発ボード作成方法
 - [MCPプロトコルIoT制御使用法](docs/mcp-usage.md) - MCPプロトコルでIoTデバイスを制御する方法
 - [MCPプロトコルインタラクションフロー](docs/mcp-protocol.md) - デバイス側MCPプロトコルの実装方法
+- [MQTT + UDP ハイブリッド通信プロトコルドキュメント](docs/mqtt-udp.md)
 - [詳細なWebSocket通信プロトコルドキュメント](docs/websocket.md)
 
 ## 大規模モデル設定
@@ -140,11 +140,23 @@ Feishuドキュメントチュートリアルをご覧ください：
 - [xinnan-tech/xiaozhi-esp32-server](https://github.com/xinnan-tech/xiaozhi-esp32-server) Pythonサーバー
 - [joey-zhou/xiaozhi-esp32-server-java](https://github.com/joey-zhou/xiaozhi-esp32-server-java) Javaサーバー
 - [AnimeAIChat/xiaozhi-server-go](https://github.com/AnimeAIChat/xiaozhi-server-go) Golangサーバー
+- [hackers365/xiaozhi-esp32-server-golang](https://github.com/hackers365/xiaozhi-esp32-server-golang) Golangサーバー
 
 シャオジー通信プロトコルを利用した他のクライアントプロジェクト：
 
 - [huangjunsen0406/py-xiaozhi](https://github.com/huangjunsen0406/py-xiaozhi) Pythonクライアント
 - [TOM88812/xiaozhi-android-client](https://github.com/TOM88812/xiaozhi-android-client) Androidクライアント
+- [100askTeam/xiaozhi-linux](http://github.com/100askTeam/xiaozhi-linux) 百問科技提供のLinuxクライアント
+- [78/xiaozhi-sf32](https://github.com/78/xiaozhi-sf32) 思澈科技のBluetoothチップファームウェア
+- [QuecPython/solution-xiaozhiAI](https://github.com/QuecPython/solution-xiaozhiAI) 移遠提供のQuecPythonファームウェア
+
+## プロジェクトについて
+
+これはエビ兄さんがオープンソースで公開しているESP32プロジェクトで、MITライセンスのもと、誰でも無料で、商用利用も可能です。
+
+このプロジェクトを通じて、AIハードウェア開発を理解し、急速に進化する大規模言語モデルを実際のハードウェアデバイスに応用できるようになることを目指しています。
+
+ご意見やご提案があれば、いつでもIssueを提出するか、[Discord](https://discord.gg/C759fGMBcZ) または QQグループ：1011329060 にご参加ください。
 
 ## スター履歴
 

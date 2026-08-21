@@ -1,0 +1,15 @@
+{
+    "manufacturer": "nulllab",
+    "type": "nulllab-esp32s3-lcd",
+    "target": "esp32s3",
+    "builds": [
+        {
+            "name": "nulllab-esp32s3-lcd-ov3660",
+            "sdkconfig_append": [
+                "CONFIG_CAMERA_OV3660=y",
+                "CONFIG_CAMERA_OV3660_AUTO_DETECT_DVP_INTERFACE_SENSOR=y",
+                "CONFIG_CAMERA_OV3660_DVP_YUV422_240X240_24FPS=y"
+            ]
+        }
+    ]
+}

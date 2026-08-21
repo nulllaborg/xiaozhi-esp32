@@ -1,0 +1,28 @@
+{
+    "type": "nulllab-esp32",
+    "target": "esp32",
+    "manufacturer": "nulllab",
+    "builds": [
+        {
+            "name": "nulllab-esp32-gpio27",
+            "sdkconfig_append": [
+                "CONFIG_OLED_TYPE_SSD3306=y",
+                "CONFIG_MIC_DIN_PIN_27=y"
+            ]
+        },
+        {
+            "name": "nulllab-esp32-gpio19",
+            "sdkconfig_append": [
+                "CONFIG_OLED_TYPE_SSD3306=y",
+                "CONFIG_MIC_DIN_PIN_19=y"
+            ]
+        },
+        {
+            "name": "nulllab-esp32-gpio27-sh1106",
+            "sdkconfig_append": [
+                "CONFIG_OLED_TYPE_SH1106=y",
+                "CONFIG_MIC_DIN_PIN_27=y"
+            ]
+        }
+    ]
+}

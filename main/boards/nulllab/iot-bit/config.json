@@ -1,0 +1,13 @@
+{
+    "type": "nulllab-iot-bit",
+    "target": "esp32",
+    "manufacturer": "nulllab",
+    "builds": [
+        {
+            "name": "nulllab-iot-bit",
+            "sdkconfig_append": [
+                "CONFIG_ESP_SYSTEM_EVENT_TASK_STACK_SIZE=4000"
+            ]
+        }
+    ]
+}

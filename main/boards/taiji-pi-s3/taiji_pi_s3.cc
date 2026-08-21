@@ -8,7 +8,6 @@
 #include <esp_log.h>
 #include <driver/i2c_master.h>
 #include <driver/ledc.h>
-#include <wifi_station.h>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_st77916.h>
@@ -16,10 +15,27 @@
 
 #define TAG "TaijiPiS3Board"
 
+class TaijiPiS3Display : public SpiLcdDisplay {
+public:
+    using SpiLcdDisplay::SpiLcdDisplay;
 
-LV_FONT_DECLARE(font_puhui_20_4);
-LV_FONT_DECLARE(font_awesome_20_4);
+    void SetupUI() override {
+        SpiLcdDisplay::SetupUI();
+        DisplayLockGuard lock(this);
 
+        lv_obj_align(status_bar_, LV_ALIGN_TOP_MID, 0, DISPLAY_STATUS_BAR_TOP_OFFSET);
+
+        if (bottom_bar_ != nullptr && chat_message_label_ != nullptr) {
+            lv_obj_set_width(bottom_bar_, DISPLAY_CHAT_BAR_WIDTH);
+            lv_obj_align(bottom_bar_, LV_ALIGN_BOTTOM_MID, 0, -DISPLAY_CHAT_BAR_BOTTOM_OFFSET);
+
+            const lv_coord_t horizontal_padding =
+                lv_obj_get_style_pad_left(bottom_bar_, LV_PART_MAIN) +
+                lv_obj_get_style_pad_right(bottom_bar_, LV_PART_MAIN);
+            lv_obj_set_width(chat_message_label_, DISPLAY_CHAT_BAR_WIDTH - horizontal_padding);
+        }
+    }
+};
 
 static const st77916_lcd_init_cmd_t lcd_init_cmds[] = {
 #ifdef CONFIG_TAIJIPAI_I2S_TYPE_STD
@@ -508,9 +524,9 @@ private:
             // 只有短触才触发
             if (touch_duration < TOUCH_THRESHOLD_MS) {
                 auto& app = Application::GetInstance();
-                if (app.GetDeviceState() == kDeviceStateStarting && 
-                    !WifiStation::GetInstance().IsConnected()) {
-                    board.ResetWifiConfiguration();
+                if (app.GetDeviceState() == kDeviceStateStarting) {
+                    board.EnterWifiConfigMode();
+                    return;
                 }
                 app.ToggleChatState();
             }
@@ -568,7 +584,15 @@ private:
 
         ESP_LOGI(TAG, "Install panel IO");
         
-        const esp_lcd_panel_io_spi_config_t io_config = ST77916_PANEL_IO_QSPI_CONFIG(QSPI_PIN_NUM_LCD_CS, NULL, NULL);
+        esp_lcd_panel_io_spi_config_t io_config = {};
+        io_config.cs_gpio_num = QSPI_PIN_NUM_LCD_CS;
+        io_config.dc_gpio_num = GPIO_NUM_NC;
+        io_config.spi_mode = 0;
+        io_config.pclk_hz = 40 * 1000 * 1000;
+        io_config.trans_queue_depth = 10;
+        io_config.lcd_cmd_bits = 32;
+        io_config.lcd_param_bits = 8;
+        io_config.flags.quad_mode = true;
         ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)QSPI_LCD_HOST, &io_config, &panel_io));
 
         ESP_LOGI(TAG, "Install ST77916 panel driver");
@@ -580,12 +604,11 @@ private:
                 .use_qspi_interface = 1,
             },
         };
-        const esp_lcd_panel_dev_config_t panel_config = {
-            .reset_gpio_num = QSPI_PIN_NUM_LCD_RST,
-            .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,     // Implemented by LCD command `36h`
-            .bits_per_pixel = QSPI_LCD_BIT_PER_PIXEL,    // Implemented by LCD command `3Ah` (16/18)
-            .vendor_config = &vendor_config,
-        };
+        esp_lcd_panel_dev_config_t panel_config = {};
+        panel_config.rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB;  // Implemented by LCD command `36h`
+        panel_config.bits_per_pixel = QSPI_LCD_BIT_PER_PIXEL;     // Implemented by LCD command `3Ah` (16/18)
+        panel_config.reset_gpio_num = QSPI_PIN_NUM_LCD_RST;
+        panel_config.vendor_config = &vendor_config;
         ESP_ERROR_CHECK(esp_lcd_new_panel_st77916(panel_io, &panel_config, &panel));
 
         esp_lcd_panel_reset(panel);
@@ -594,13 +617,9 @@ private:
         esp_lcd_panel_swap_xy(panel, DISPLAY_SWAP_XY);
         esp_lcd_panel_mirror(panel, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y);
 
-        display_ = new SpiLcdDisplay(panel_io, panel,
-                                    DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY,
-                                    {
-                                        .text_font = &font_puhui_20_4,
-                                        .icon_font = &font_awesome_20_4,
-                                        .emoji_font = font_emoji_64_init(),
-                                    });
+        display_ = new TaijiPiS3Display(panel_io, panel, DISPLAY_WIDTH, DISPLAY_HEIGHT,
+                                       DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, DISPLAY_MIRROR_X,
+                                       DISPLAY_MIRROR_Y, DISPLAY_SWAP_XY);
     }
 
     void InitializeMute() {
@@ -628,9 +647,17 @@ public:
             AUDIO_I2S_GPIO_BCLK,
             AUDIO_I2S_GPIO_WS,
             AUDIO_I2S_GPIO_DOUT,
+            #ifdef CONFIG_I2S_USE_2SLOT
+            I2S_STD_SLOT_BOTH,
+            #endif
             AUDIO_MIC_SCK_PIN,
             AUDIO_MIC_WS_PIN,
+	        #ifdef CONFIG_I2S_USE_2SLOT
+            AUDIO_MIC_SD_PIN,
+            I2S_STD_SLOT_LEFT
+            #else
             AUDIO_MIC_SD_PIN
+            #endif
         );
 #else
         static NoAudioCodecSimplexPdm audio_codec(
@@ -639,6 +666,9 @@ public:
             AUDIO_I2S_GPIO_BCLK,
             AUDIO_I2S_GPIO_WS,
             AUDIO_I2S_GPIO_DOUT,
+            #ifdef CONFIG_I2S_USE_2SLOT
+            I2S_STD_SLOT_BOTH,
+            #endif 
             AUDIO_MIC_WS_PIN,
             AUDIO_MIC_SD_PIN
         );
