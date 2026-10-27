@@ -1,0 +1,13 @@
+{
+  "target": "esp32s3",
+  "builds": [
+    {
+      "name": "aiotbit",
+      "sdkconfig_append": [
+        "CONFIG_USE_DEVICE_AEC=y",
+        "CONFIG_SPIRAM_MODE_OCT=",
+        "CONFIG_SPIRAM_MODE_QUAD=y"
+      ]
+    }
+  ]
+}
